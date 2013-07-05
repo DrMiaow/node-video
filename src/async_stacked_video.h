@@ -39,15 +39,11 @@ class AsyncStackedVideo : public node::ObjectWrap {
     std::string tmp_dir;
     unsigned int push_id, fragment_id;
 
-#if NODE_VERSION_AT_LEAST(0,6,0)
-    static void EIO_Push(eio_req *req);
-    static void EIO_Encode(eio_req *req);
-#else
-    static int EIO_Push(eio_req *req);
-    static int EIO_Encode(eio_req *req);
-#endif
-    static int EIO_PushAfter(eio_req *req);
-    static int EIO_EncodeAfter(eio_req *req);
+    static void EIO_Push(uv_work_t *req);
+    static void EIO_Encode(uv_work_t *req);
+    
+    static void EIO_PushAfter(uv_work_t *req);
+    static void EIO_EncodeAfter(uv_work_t *req);
 
     static void push_fragment(unsigned char *frame, int width, int height,
         unsigned char *fragment, int x, int y, int w, int h);

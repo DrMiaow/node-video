@@ -40,7 +40,7 @@ void
 #else
 int
 #endif
-AsyncStackedVideo::EIO_Push(eio_req *req)
+AsyncStackedVideo::EIO_Push(uv_work_t *req)
 {
     push_request *push_req = (push_request *)req->data;
 
@@ -101,16 +101,16 @@ AsyncStackedVideo::EIO_Push(eio_req *req)
     #endif
 }
 
-int
-AsyncStackedVideo::EIO_PushAfter(eio_req *req)
+void
+AsyncStackedVideo::EIO_PushAfter(uv_work_t *req)
 {
-    ev_unref(EV_DEFAULT_UC);
+    uv_unref((uv_handle_t*) req);
 
     push_request *push_req = (push_request *)req->data;
     free(push_req->data);
     free(push_req);
 
-    return 0;
+    delete req;
 }
 
 Handle<Value>
@@ -141,8 +141,13 @@ AsyncStackedVideo::Push(unsigned char *rect, int x, int y, int w, int h)
     push_req->w = w;
     push_req->h = h;
 
-    eio_custom(EIO_Push, EIO_PRI_DEFAULT, EIO_PushAfter, push_req);
-    ev_ref(EV_DEFAULT_UC);
+    //eio_custom(EIO_Push, EIO_PRI_DEFAULT, EIO_PushAfter, push_req);
+    //ev_ref(EV_DEFAULT_UC);
+
+    uv_work_t *req = new uv_work_t;
+    req->data = enc_req;
+    uv_queue_work(uv_default_loop(), req, EIO_Push, EIO_PushAfter);
+    uv_ref((uv_handle_t*) &req);
 
     return Undefined();
 }
@@ -410,7 +415,7 @@ void
 #else
 int
 #endif
-AsyncStackedVideo::EIO_Encode(eio_req *req)
+AsyncStackedVideo::EIO_Encode(uv_work_t *req)
 {
     async_encode_request *enc_req = (async_encode_request *)req->data;
     AsyncStackedVideo *video = (AsyncStackedVideo *)enc_req->video_obj;
@@ -493,12 +498,13 @@ AsyncStackedVideo::EIO_Encode(eio_req *req)
     #endif
 }
 
-int
-AsyncStackedVideo::EIO_EncodeAfter(eio_req *req)
+void
+AsyncStackedVideo::EIO_EncodeAfter(uv_work_t *req)
 {
     HandleScope scope;
 
-    ev_unref(EV_DEFAULT_UC);
+    uv_unref((uv_handle_t*) req);
+
     async_encode_request *enc_req = (async_encode_request *)req->data;
 
     Handle<Value> argv[2];
@@ -524,7 +530,7 @@ AsyncStackedVideo::EIO_EncodeAfter(eio_req *req)
     enc_req->video_obj->Unref();
     free(enc_req);
 
-    return 0;
+    delete req;
 }
 
 
@@ -550,9 +556,14 @@ AsyncStackedVideo::Encode(const Arguments &args)
     enc_req->video_obj = video;
     enc_req->error = NULL;
 
-    eio_custom(EIO_Encode, EIO_PRI_DEFAULT, EIO_EncodeAfter, enc_req);
+    //eio_custom(EIO_Encode, EIO_PRI_DEFAULT, EIO_EncodeAfter, enc_req);
+    //ev_ref(EV_DEFAULT_UC);
 
-    ev_ref(EV_DEFAULT_UC);
+    uv_work_t *req = new uv_work_t;    
+    req->data = enc_req;                                                        
+    uv_queue_work(uv_default_loop(), req, EIO_Encode, EIO_EncodeAfter);
+    uv_ref((uv_handle_t*) &req);   
+
     video->Ref();
 
     return Undefined();
