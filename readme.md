@@ -171,10 +171,26 @@ callback function, which will be called once the encoding is done:
 Also coming near you soon. This is the most awesome stuff!
 
 
-##How to compile?
+#Build Instructions
 
-You need node.js installed to compile this module. When installed it comes with
-node-waf tool, run it in this libs dir:
+The following instructions are very linux centric at the moment.
+
+##Dependencies
+
+You need node.js installed to compile this module. 
+
+As this is a node extension, you will need to have install node-gyp.
+
+	npm install node-gyp
+
+This project has dependencies on the Ogg and Theora libraries
+
+
+	sudo apt-get install libogg-dev
+
+	sudo apt-get install libtheora-dev
+	
+##How to compile?
 
     node-gyp configure build
 
