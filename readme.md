@@ -2,8 +2,11 @@
 This is a node.js module, writen in C++, that produces Theora/Ogg videos from
 the given RGB buffers.
 
-It was written by Peteris Krumins (peter@catonmat.net).
+It was originaly written by Peteris Krumins (peter@catonmat.net).
 His blog is at http://www.catonmat.net  --  good coders code, great reuse.
+
+It has been extended by James McParlane (drmiaow@gmail.com) 
+His blog is at http://blog.metawrap.com -- good artists copy; great artists steal.
 
 ------------------------------------------------------------------------------
 
@@ -173,7 +176,7 @@ Also coming near you soon. This is the most awesome stuff!
 You need node.js installed to compile this module. When installed it comes with
 node-waf tool, run it in this libs dir:
 
-    node-waf configure build
+    node-gyp configure build
 
 This will produce video.node dll. After that, make sure NODE_PATH contains lib's
 dir. 
@@ -208,3 +211,5 @@ http://www.catonmat.net
 
 * Node v0.3 buffers (James Halliday substack)
 * Node v0.6 compatibility (Pascal Deschenes <pdeschen at gmail dot com>)
+* Waf -> Gyp conversion (James McParlane <drmiaow at gmail dot com>)
+* Node v0.10 compatibility (James McParlane <drmiaow at gmail dot com>)
