@@ -18,7 +18,7 @@
     "license": "MIT",
     "repository": {
         "type": "git",
-        "url": "http://github.com/pkrumins/node-video.git" 
+        "url": "http://github.com/DrMiaow/node-video.git" 
     }, 
     "directories": {
         "tests": "tests"
@@ -27,6 +27,6 @@
         "node": ">=0.1.93"
     },
     "scripts": {
-        "install": "node-waf configure build"
+        "install": "node-gyp configure build"
     }
 }
