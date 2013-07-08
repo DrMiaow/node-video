@@ -16,7 +16,7 @@ static int chroma_format = TH_PF_420;
 static inline unsigned char
 yuv_clamp(double d)
 {
-    http://catonmat.net/ftp/clamps.jpg
+    //http://catonmat.net/ftp/clamps.jpg
     if(d < 0) return 0;
     if(d > 255) return 255;
     return d;
@@ -211,8 +211,10 @@ VideoEncoder::WriteFrame(const unsigned char *rgb, int dupCount)
     unsigned char *yuv_u;
     unsigned char *yuv_v;
 
-    unsigned int x;
-    unsigned int y;
+
+    // Changed to signed by james..
+    int x;
+    int y;
 
     yuv = rgb_to_yuv(rgb, width*height*3);
     LOKI_ON_BLOCK_EXIT(free, yuv);

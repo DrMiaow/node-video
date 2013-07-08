@@ -4,6 +4,8 @@
 #include "stacked_video.h"
 #include "async_stacked_video.h"
 
+
+
 extern "C" void
 init(v8::Handle<v8::Object> target)
 {
@@ -13,4 +15,7 @@ init(v8::Handle<v8::Object> target)
     StackedVideo::Initialize(target);
     AsyncStackedVideo::Initialize(target);
 }
+
+
+NODE_MODULE(video,init)
 

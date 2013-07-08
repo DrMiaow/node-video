@@ -2,25 +2,23 @@
   'targets': [
     {
       'target_name': 'video',
-      'include_dirs': [
-      ],
       'sources': [
+	'src/common.cpp',
         'src/async_stacked_video.cpp',
-        'src/common.cpp',
         'src/fixed_video.cpp',
-		'src/module.cpp',
-		'src/module.cpp',
-		'src/utils.cpp',
+	'src/module.cpp',
+	'src/utils.cpp',
+	'src/stacked_video.cpp',
         'src/video_encoder.cpp'
       ],
-	  'defines': [
-              '-D_FILE_OFFSET_BITS=64', 
-			  '-D_LARGEFILE_SOURCE'
+      'cflags!': [ '-fno-exceptions','-Wunused-variable' ],
+      'cflags_cc!': [ '-fno-exceptions','-Wunused-variable' ],
+      'defines': [
+          '_FILE_OFFSET_BITS=64', 
+	  '_LARGEFILE_SOURCE'
       ],			  
-	  'conditions': [
+      'conditions': [
         ['OS=="mac"', {
-            'include_dirs': [
-            ],
             'libraries': [
             	'/Library/Ogg',
 				'/Library/TheoraDec',
@@ -28,14 +26,14 @@
             ]
         }],
         ['OS=="linux"', {
-        	'link_settings': {
-         		'libraries': [
-         			'-logg',
-					'-theoradec',
-					'-theoraenc',
-         		]
-					
-        	}
+                'link_settings': {
+                        'libraries': [
+                                '-logg',
+                                '-ltheoradec',
+                                '-ltheoraenc',
+                        ]
+ 
+                }
         }]
       ]	  
     }

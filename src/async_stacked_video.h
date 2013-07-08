@@ -42,11 +42,11 @@ class AsyncStackedVideo : public node::ObjectWrap {
     static void EIO_Push(uv_work_t *req);
     static void EIO_Encode(uv_work_t *req);
     
-    static void EIO_PushAfter(uv_work_t *req);
-    static void EIO_EncodeAfter(uv_work_t *req);
+    static void EIO_PushAfter(uv_work_t *req, int status);
+    static void EIO_EncodeAfter(uv_work_t *req, int status);
 
     static void push_fragment(unsigned char *frame, int width, int height,
-        unsigned char *fragment, int x, int y, int w, int h);
+    unsigned char *fragment, int x, int y, int w, int h);
     static Rect rect_dims(const char *fragment_name);
 
 public:

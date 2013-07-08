@@ -1,0 +1,41 @@
+0 info it worked if it ends with ok
+1 verbose cli [ '/usr/bin/node', '/usr/bin/npm', 'install', '../../node-video' ]
+2 info using npm@1.2.32
+3 info using node@v0.10.12
+4 verbose node symlink /usr/bin/node
+5 verbose read json /home/ubuntu/node-video/package.json
+6 verbose from cache /home/ubuntu/node-video/package.json
+7 verbose readDependencies using package.json deps
+8 verbose cache add [ '../../node-video', null ]
+9 verbose cache add name=undefined spec="../../node-video" args=["../../node-video",null]
+10 verbose parsed url { protocol: null,
+10 verbose parsed url   slashes: null,
+10 verbose parsed url   auth: null,
+10 verbose parsed url   host: null,
+10 verbose parsed url   port: null,
+10 verbose parsed url   hostname: null,
+10 verbose parsed url   hash: null,
+10 verbose parsed url   search: null,
+10 verbose parsed url   query: null,
+10 verbose parsed url   pathname: '../../node-video',
+10 verbose parsed url   path: '../../node-video',
+10 verbose parsed url   href: '../../node-video' }
+11 silly lockFile 4fd1c3c3-node-video ../../node-video
+12 verbose lock ../../node-video /home/ubuntu/.npm/4fd1c3c3-node-video.lock
+13 silly lockFile 4fd1c3c3-node-video ../../node-video
+14 silly lockFile 4fd1c3c3-node-video ../../node-video
+15 error addLocal Could not install ../../node-video
+16 error Error: ENOENT, stat '../../node-video'
+17 error If you need help, you may report this log at:
+17 error     <http://github.com/isaacs/npm/issues>
+17 error or email it to:
+17 error     <npm-@googlegroups.com>
+18 error System Linux 3.8.0-26-generic
+19 error command "/usr/bin/node" "/usr/bin/npm" "install" "../../node-video"
+20 error cwd /home/ubuntu/node-video/tests/full-frames
+21 error node -v v0.10.12
+22 error npm -v 1.2.32
+23 error path ../../node-video
+24 error code ENOENT
+25 error errno 34
+26 verbose exit [ 34, true ]

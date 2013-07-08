@@ -9,6 +9,9 @@
 using namespace v8;
 using namespace node;
 
+#if 1
+#endif
+
 AsyncStackedVideo::AsyncStackedVideo(int wwidth, int hheight) :
     width(wwidth), height(hheight), videoEncoder(wwidth, hheight),
     push_id(0), fragment_id(0) {}
@@ -102,7 +105,7 @@ AsyncStackedVideo::EIO_Push(uv_work_t *req)
 }
 
 void
-AsyncStackedVideo::EIO_PushAfter(uv_work_t *req)
+AsyncStackedVideo::EIO_PushAfter(uv_work_t *req, int status)
 {
     uv_unref((uv_handle_t*) req);
 
@@ -145,8 +148,10 @@ AsyncStackedVideo::Push(unsigned char *rect, int x, int y, int w, int h)
     //ev_ref(EV_DEFAULT_UC);
 
     uv_work_t *req = new uv_work_t;
-    req->data = enc_req;
+    req->data = push_req;
+
     uv_queue_work(uv_default_loop(), req, EIO_Push, EIO_PushAfter);
+
     uv_ref((uv_handle_t*) &req);
 
     return Undefined();
@@ -425,7 +430,7 @@ AsyncStackedVideo::EIO_Encode(uv_work_t *req)
 
     for (size_t push_id = 0; push_id < video->push_id; push_id++) {
         char fragment_path[512];
-        snprintf(fragment_path, 512, "%s/%d", video->tmp_dir.c_str(), push_id);
+        snprintf(fragment_path, 512, "%s/%lu", video->tmp_dir.c_str(), push_id);
         if (!is_dir(fragment_path)) {
             char error[600];
             snprintf(error, 600, "Error in AsyncStackedVideo::EIO_Encode %s is not a dir.",
@@ -454,7 +459,7 @@ AsyncStackedVideo::EIO_Encode(uv_work_t *req)
         }
 
         for (int i = 0; i < nfragments; i++) {
-            snprintf(fragment_path, 512, "%s/%d/%s",
+            snprintf(fragment_path, 512, "%s/%lu/%s",
                 video->tmp_dir.c_str(), push_id, fragments[i]);
             FILE *in = fopen(fragment_path, "r");
             if (!in) {
@@ -499,7 +504,7 @@ AsyncStackedVideo::EIO_Encode(uv_work_t *req)
 }
 
 void
-AsyncStackedVideo::EIO_EncodeAfter(uv_work_t *req)
+AsyncStackedVideo::EIO_EncodeAfter(uv_work_t *req, int status)
 {
     HandleScope scope;
 
