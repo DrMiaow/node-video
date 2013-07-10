@@ -1,4 +1,4 @@
-var VideoLib = require('video');
+var VideoLib = require('../..');
 var Buffer = require('buffer').Buffer;
 var fs = require('fs');
 var sys = require('sys');

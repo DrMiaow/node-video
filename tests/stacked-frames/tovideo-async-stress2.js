@@ -5,6 +5,8 @@ var Buffer = require('buffer').Buffer;
 var fs = require('fs');
 var sys = require('sys');
 
+var outputFilename = 'video-async-stress2.ogv';
+
 var chunkDirs = fs.readdirSync('.').sort().filter(
     function (f) {
         return /^\d+$/.test(f);
@@ -24,38 +26,40 @@ function rectDim(fileName) {
 }
 
 var stackedVideo = new VideoLib.AsyncStackedVideo(720,400);
-stackedVideo.setOutputFile('video-async.ogv');
-stackedVideo.setTmpDir('./moo');
+stackedVideo.setOutputFile(outputFilename);
+stackedVideo.setTmpDir('./temp');
 
-chunkDirs.forEach(function (dir) {
-    console.log(dir);
-    var chunkFiles = fs.readdirSync(dir).sort().filter(
-        function (f) {
-            return /^\d+-rgb-\d+-\d+-\d+-\d+.dat/.test(f);
-        }
-    );
-    chunkFiles.forEach(function (chunkFile) {
-        var dims = rectDim(chunkFile);
-        var rgb = fs.readFileSync(dir + '/' + chunkFile); // returns buffer
-        stackedVideo.push(rgb, dims.x, dims.y, dims.w, dims.h);
-    });
-    stackedVideo.endPush();
-});
 
 console.log('encoding asynchronously... ');
 
-var moo = setInterval(function () {
-    process.stdout.write('.');
-}, 100);
+for(var i=0;i<20;i++)
+{
+        chunkDirs.forEach(function (dir)
+        {
+                //console.log(dir);
+                var chunkFiles = fs.readdirSync(dir).sort().filter(function (f)
+                {
+                        return /^\d+-rgb-\d+-\d+-\d+-\d+.dat/.test(f);
+                });
+
+                chunkFiles.forEach(function (chunkFile)
+                {
+                        var dims = rectDim(chunkFile);
+                        var rgb = fs.readFileSync(dir + '/' + chunkFile); // returns buffer
+                        stackedVideo.push(rgb, dims.x, dims.y, dims.w, dims.h);
+                });
+
+                stackedVideo.endPush();
+        });
+}
 
 stackedVideo.encode(function (status, error) {
     console.log('encode status = ' + status);
     console.log('encode error = ' + error);
 
-    clearInterval(moo);
     process.stdout.write('\n');
     if (status) {
-        console.log('video successfully written to video-async.ogv');
+        console.log('video successfully written to ' + outputFilename);
     }
     else {
         console.log('failed writing video: ' + error);

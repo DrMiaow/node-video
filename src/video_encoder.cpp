@@ -55,16 +55,26 @@ VideoEncoder::~VideoEncoder() {
 void
 VideoEncoder::newFrame(const unsigned char *data)
 {
-    if (!frameCount) {
+    if (!frameCount) 
+    {
         if (outputFileName.empty())
-            throw "No output means was set. Use setOutputFile to set it.";
-
+	{
+	    fprintf(stderr,"newFrame error nofilename\n");
+	    ThrowException(Exception::Error(String::New("No output means was set. Use setOutputFile to set it.")));
+            //throw "No output means was set. Use setOutputFile to set it.";a
+	    return;
+	}
         ogg_fp = fopen(outputFileName.c_str(), "w+");
-        if (!ogg_fp) {
+        if (!ogg_fp) 
+	{
+	    fprintf(stderr,"newFrame error %s.\n", strerror(errno));
+	    fprintf(stderr,"newFrame filename %s.\n",outputFileName.c_str());
             char error_msg[256];
-            snprintf(error_msg, 256, "Could not open %s. Error: %s.",
-                outputFileName.c_str(), strerror(errno));
-            throw error_msg;
+            snprintf(error_msg, 256, "Could not open %s. Error: %s.\n",outputFileName.c_str(), strerror(errno));
+            fprintf(stderr,"newFrame error '%s'.\n",error_msg);
+	    ThrowException(Exception::Error(String::New(error_msg)));
+            //throw error_msg;
+	    return;
         }
 
         InitTheora();

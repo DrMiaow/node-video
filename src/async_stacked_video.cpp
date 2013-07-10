@@ -9,18 +9,13 @@
 using namespace v8;
 using namespace node;
 
-#if 1
-#endif
-
 AsyncStackedVideo::AsyncStackedVideo(int wwidth, int hheight) :
     width(wwidth), height(hheight), videoEncoder(wwidth, hheight),
-    push_id(0), fragment_id(0) {}
+    push_id(0), fragment_id(0) 
+{
+}
 
-#if NODE_VERSION_AT_LEAST(0,6,0)
 void
-#else
-int
-#endif
 AsyncStackedVideo::Initialize(Handle<Object> target)
 {
     HandleScope scope;
@@ -38,11 +33,7 @@ AsyncStackedVideo::Initialize(Handle<Object> target)
     target->Set(String::NewSymbol("AsyncStackedVideo"), t->GetFunction());
 }
 
-#if NODE_VERSION_AT_LEAST(0,6,0)
 void
-#else
-int
-#endif
 AsyncStackedVideo::EIO_Push(uv_work_t *req)
 {
     push_request *push_req = (push_request *)req->data;
@@ -51,13 +42,9 @@ AsyncStackedVideo::EIO_Push(uv_work_t *req)
         if (mkdir(push_req->tmp_dir, 0775) == -1) {
             // there is no way to return this error to node as this call was
             // async with no callback
-            fprintf(stderr, "Could not mkdir(%s) in AsyncStackedVideo::EIO_Push.\n",
+            fprintf(stdout, "Could not mkdir(%s) in AsyncStackedVideo::EIO_Push.\n",
                 push_req->tmp_dir);
-            #if NODE_VERSION_AT_LEAST(0,6,0)
             return;
-            #else
-            return 0;
-            #endif
         }
     }
 
@@ -66,13 +53,8 @@ AsyncStackedVideo::EIO_Push(uv_work_t *req)
 
     if (!is_dir(fragment_dir)) {
         if (mkdir(fragment_dir, 0775) == -1) {
-            fprintf(stderr, "Could not mkdir(%s) in AsyncStackedVideo::EIO_Push.\n",
-                fragment_dir);
-            #if NODE_VERSION_AT_LEAST(0,6,0)
+            fprintf(stdout, "Could not mkdir(%s) in AsyncStackedVideo::EIO_Push.\n", fragment_dir);
             return;
-            #else
-            return 0;
-            #endif
         }
     }
 
@@ -83,25 +65,15 @@ AsyncStackedVideo::EIO_Push(uv_work_t *req)
     FILE *out = fopen(filename, "w+");
     LOKI_ON_BLOCK_EXIT(fclose, out);
     if (!out) {
-        fprintf(stderr, "Failed to open %s in AsyncStackedVideo::EIO_Push.\n",
-            filename);
-        #if NODE_VERSION_AT_LEAST(0,6,0)
+        fprintf(stdout, "Failed to open %s in AsyncStackedVideo::EIO_Push.\n", filename);
         return;
-        #else
-        return 0;
-        #endif
     }
     int written = fwrite(push_req->data, sizeof(unsigned char), push_req->data_size, out);
     if (written != push_req->data_size) {
-        fprintf(stderr, "Failed to write all data to %s. Wrote only %d of %d.\n",
-            filename, written, push_req->data_size);
+        fprintf(stdout, "Failed to write all data to %s. Wrote only %d of %d.\n", filename, written, push_req->data_size);
     }
 
-    #if NODE_VERSION_AT_LEAST(0,6,0)
     return;
-    #else
-    return 0;
-    #endif
 }
 
 void
@@ -121,17 +93,27 @@ AsyncStackedVideo::Push(unsigned char *rect, int x, int y, int w, int h)
 {
     HandleScope scope;
 
+    //fprintf(stdout,"push\n");
+
     if (tmp_dir.empty())
-        throw "Tmp dir is not set. Use .setTmpDir to set it before pushing.";
+    {
+        ThrowException(Exception::Error(String::New("Tmp dir is not set. Use .setTmpDir to set it before pushing.")));
+	return Undefined();
+    }
 
     push_request *push_req = (push_request *)malloc(sizeof(*push_req));
     if (!push_req)
-        throw "malloc in AsyncStackedVideo::Push failed.";
+    {
+        ThrowException(Exception::Error(String::New("malloc in AsyncStackedVideo::Push failed.")));
+	return Undefined();
+    }
 
     push_req->data = (unsigned char *)malloc(sizeof(*push_req->data)*w*h*3);
-    if (!push_req->data) {
+    if (!push_req->data) 
+    {
         free(push_req);
-        throw "malloc in AsyncStackedVideo::Push failed.";
+        ThrowException(Exception::Error(String::New("malloc in AsyncStackedVideo::Push failed.")));
+	return Undefined();
     }
 
     memcpy(push_req->data, rect, w*h*3);
@@ -154,12 +136,16 @@ AsyncStackedVideo::Push(unsigned char *rect, int x, int y, int w, int h)
 
     uv_ref((uv_handle_t*) &req);
 
+    //fprintf(stdout,"pushed\n");
+
+
     return Undefined();
 }
 
 void
 AsyncStackedVideo::EndPush(unsigned long timeStamp)
 {
+    //fprintf(stdout,"endpush\n");
     push_id++;
     fragment_id = 0;
 }
@@ -415,33 +401,32 @@ AsyncStackedVideo::rect_dims(const char *fragment_name)
 }
 
 
-#if NODE_VERSION_AT_LEAST(0,6,0)
 void
-#else
-int
-#endif
 AsyncStackedVideo::EIO_Encode(uv_work_t *req)
 {
     async_encode_request *enc_req = (async_encode_request *)req->data;
+
     AsyncStackedVideo *video = (AsyncStackedVideo *)enc_req->video_obj;
 
     unsigned char *frame = (unsigned char *)malloc(sizeof(*frame)*video->width*video->height*3);
     LOKI_ON_BLOCK_EXIT(free, frame);
 
-    for (size_t push_id = 0; push_id < video->push_id; push_id++) {
+
+    for (size_t push_id = 0; push_id < video->push_id; push_id++) 
+    {
         char fragment_path[512];
         snprintf(fragment_path, 512, "%s/%lu", video->tmp_dir.c_str(), push_id);
-        if (!is_dir(fragment_path)) {
+        if (!is_dir(fragment_path)) 
+        {
             char error[600];
+            fprintf(stdout,"EIO_Encode:Error 1\n");
             snprintf(error, 600, "Error in AsyncStackedVideo::EIO_Encode %s is not a dir.",
                 fragment_path);
             enc_req->error = strdup(error);
-            #if NODE_VERSION_AT_LEAST(0,6,0)
             return;
-            #else
-            return 0;
-            #endif
         }
+
+
 
         char **fragments = find_files(fragment_path);
         LOKI_ON_BLOCK_EXIT(free_file_list, fragments);
@@ -449,58 +434,62 @@ AsyncStackedVideo::EIO_Encode(uv_work_t *req)
 
         qsort(fragments, nfragments, sizeof(char *), fragment_sort);
 
-        if (!frame) {
+
+        if (!frame) 
+        {
+            fprintf(stderr,"EIO_Encode:Error 2\n");
             enc_req->error = strdup("malloc failed in AsyncStackedVideo::EIO_Encode.");
-            #if NODE_VERSION_AT_LEAST(0,6,0)
             return;
-            #else
-            return 0;
-            #endif
         }
 
-        for (int i = 0; i < nfragments; i++) {
-            snprintf(fragment_path, 512, "%s/%lu/%s",
-                video->tmp_dir.c_str(), push_id, fragments[i]);
+
+
+        for (int i = 0; i < nfragments; i++) 
+        {
+
+            snprintf(fragment_path, 512, "%s/%lu/%s", video->tmp_dir.c_str(), push_id, fragments[i]);
+
             FILE *in = fopen(fragment_path, "r");
-            if (!in) {
+            if (!in) 
+            {
+		fprintf(stderr,"EIO_Encode:Error 3");
                 char error[600];
                 snprintf(error, 600, "Failed opening %s in AsyncStackedVideo::EIO_Encode.",
                     fragment_path);
                 enc_req->error = strdup(error);
-                #if NODE_VERSION_AT_LEAST(0,6,0)
                 return;
-                #else
-                return 0;
-                #endif
             }
+            
             LOKI_ON_BLOCK_EXIT(fclose, in);
             int size = file_size(fragment_path);
+
             unsigned char *data = (unsigned char *)malloc(sizeof(*data)*size);
             LOKI_ON_BLOCK_EXIT(free, data);
+
+
             int read = fread(data, sizeof *data, size, in);
-            if (read != size) {
+
+            if (read != size) 
+            {
+		fprintf(stderr,"EIO_Encode:Error 4\n");
                 char error[600];
                 snprintf(error, 600, "Error - should have read %d but read only %d from %s in AsyncStackedVideo::EIO_Encode", size, read, fragment_path);
                 enc_req->error = strdup(error);
-                #if NODE_VERSION_AT_LEAST(0,6,0)
                 return;
-                #else
-                return 0;
-                #endif
             }
+
             Rect dims = rect_dims(fragments[i]);
-            push_fragment(frame, video->width, video->height,
-                data, dims.x, dims.y, dims.w, dims.h);
+
+            push_fragment(frame, video->width, video->height, data, dims.x, dims.y, dims.w, dims.h);
+
         }
+
         video->videoEncoder.newFrame(frame);
     }
+
     video->videoEncoder.end();
 
-    #if NODE_VERSION_AT_LEAST(0,6,0)
     return;
-    #else
-    return 0;
-    #endif
 }
 
 void
@@ -508,27 +497,35 @@ AsyncStackedVideo::EIO_EncodeAfter(uv_work_t *req, int status)
 {
     HandleScope scope;
 
-    uv_unref((uv_handle_t*) req);
+    fprintf(stderr,"EIO_EncodeAfter\n");
+
+    //uv_unref((uv_handle_t*) req);
 
     async_encode_request *enc_req = (async_encode_request *)req->data;
 
     Handle<Value> argv[2];
 
-    if (enc_req->error) {
+    if (enc_req->error) 
+    {
+        fprintf(stderr,"EIO_EncodeAfter Error\n");
         argv[0] = False();
         argv[1] = ErrorException(enc_req->error);
     }
-    else {
+    else 
+    {
+        fprintf(stderr,"EIO_EncodeAfter OK\n");
         argv[0] = True();
         argv[1] = Undefined();
     }
 
-    TryCatch try_catch; // don't quite see the necessity of this
+    //TryCatch try_catch; // don't quite see the necessity of this
 
     enc_req->callback->Call(Context::GetCurrent()->Global(), 2, argv);
 
-    if (try_catch.HasCaught())
-        FatalException(try_catch);
+    //if (try_catch.HasCaught())
+    //    FatalException(try_catch);
+
+    uv_unref((uv_handle_t*) req);
 
     enc_req->callback.Dispose();
 
@@ -563,6 +560,9 @@ AsyncStackedVideo::Encode(const Arguments &args)
 
     //eio_custom(EIO_Encode, EIO_PRI_DEFAULT, EIO_EncodeAfter, enc_req);
     //ev_ref(EV_DEFAULT_UC);
+
+    fprintf(stderr,"Final event wrapping...\n");
+
 
     uv_work_t *req = new uv_work_t;    
     req->data = enc_req;                                                        

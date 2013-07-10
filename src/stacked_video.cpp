@@ -180,7 +180,7 @@ StackedVideo::NewFrame(const Arguments &args)
     if (!Buffer::HasInstance(args[0])) 
         return VException("First argument must be Buffer.");
 
-    unsigned long timeStamp = 0;
+    long timeStamp = 0;
 
     if (args.Length() == 2) {
         if (!args[1]->IsNumber())
@@ -269,7 +269,7 @@ StackedVideo::EndPush(const Arguments &args)
 {
     HandleScope scope;
 
-    unsigned long timeStamp = 0;
+    long timeStamp = 0;
 
     if (args.Length() == 1) {
         if (!args[0]->IsNumber())
