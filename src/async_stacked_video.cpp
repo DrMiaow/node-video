@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <exception>
 #include <node_buffer.h>
 #include "common.h"
 #include "utils.h"
@@ -126,18 +127,12 @@ AsyncStackedVideo::Push(unsigned char *rect, int x, int y, int w, int h)
     push_req->w = w;
     push_req->h = h;
 
-    //eio_custom(EIO_Push, EIO_PRI_DEFAULT, EIO_PushAfter, push_req);
-    //ev_ref(EV_DEFAULT_UC);
-
     uv_work_t *req = new uv_work_t;
     req->data = push_req;
 
     uv_queue_work(uv_default_loop(), req, EIO_Push, EIO_PushAfter);
 
     uv_ref((uv_handle_t*) &req);
-
-    //fprintf(stdout,"pushed\n");
-
 
     return Undefined();
 }
@@ -419,14 +414,10 @@ AsyncStackedVideo::EIO_Encode(uv_work_t *req)
         if (!is_dir(fragment_path)) 
         {
             char error[600];
-            fprintf(stdout,"EIO_Encode:Error 1\n");
-            snprintf(error, 600, "Error in AsyncStackedVideo::EIO_Encode %s is not a dir.",
-                fragment_path);
+            snprintf(error, 600, "Error in AsyncStackedVideo::EIO_Encode %s is not a dir.",fragment_path);
             enc_req->error = strdup(error);
             return;
         }
-
-
 
         char **fragments = find_files(fragment_path);
         LOKI_ON_BLOCK_EXIT(free_file_list, fragments);
@@ -434,28 +425,21 @@ AsyncStackedVideo::EIO_Encode(uv_work_t *req)
 
         qsort(fragments, nfragments, sizeof(char *), fragment_sort);
 
-
         if (!frame) 
         {
-            fprintf(stderr,"EIO_Encode:Error 2\n");
             enc_req->error = strdup("malloc failed in AsyncStackedVideo::EIO_Encode.");
             return;
         }
 
-
-
         for (int i = 0; i < nfragments; i++) 
         {
-
             snprintf(fragment_path, 512, "%s/%lu/%s", video->tmp_dir.c_str(), push_id, fragments[i]);
 
             FILE *in = fopen(fragment_path, "r");
             if (!in) 
             {
-		fprintf(stderr,"EIO_Encode:Error 3");
                 char error[600];
-                snprintf(error, 600, "Failed opening %s in AsyncStackedVideo::EIO_Encode.",
-                    fragment_path);
+                snprintf(error, 600, "Failed opening %s in AsyncStackedVideo::EIO_Encode.",fragment_path);
                 enc_req->error = strdup(error);
                 return;
             }
@@ -471,7 +455,6 @@ AsyncStackedVideo::EIO_Encode(uv_work_t *req)
 
             if (read != size) 
             {
-		fprintf(stderr,"EIO_Encode:Error 4\n");
                 char error[600];
                 snprintf(error, 600, "Error - should have read %d but read only %d from %s in AsyncStackedVideo::EIO_Encode", size, read, fragment_path);
                 enc_req->error = strdup(error);
@@ -484,7 +467,18 @@ AsyncStackedVideo::EIO_Encode(uv_work_t *req)
 
         }
 
-        video->videoEncoder.newFrame(frame);
+ 	try
+        {
+            video->videoEncoder.newFrame(frame);
+        }
+        catch (char * e)
+        {
+ 	    char error[600];
+            snprintf(error, 600, "Error - %s AsyncStackedVideo::EIO_Encode", e);
+            enc_req->error = strdup(error);
+            return;
+        }
+
     }
 
     video->videoEncoder.end();
@@ -497,41 +491,49 @@ AsyncStackedVideo::EIO_EncodeAfter(uv_work_t *req, int status)
 {
     HandleScope scope;
 
-    fprintf(stderr,"EIO_EncodeAfter\n");
-
     //uv_unref((uv_handle_t*) req);
 
+    // Cast our data as an ecoding request
     async_encode_request *enc_req = (async_encode_request *)req->data;
 
+    // We need some arguments for our callback
     Handle<Value> argv[2];
 
+    // Depending on weather or not we have an error we set the arguments...
     if (enc_req->error) 
     {
-        fprintf(stderr,"EIO_EncodeAfter Error\n");
         argv[0] = False();
-        argv[1] = ErrorException(enc_req->error);
+	argv[1] = String::New(enc_req->error);
     }
     else 
     {
-        fprintf(stderr,"EIO_EncodeAfter OK\n");
         argv[0] = True();
         argv[1] = Undefined();
     }
 
-    //TryCatch try_catch; // don't quite see the necessity of this
+    //Let's assume the callback s going to blow chunkssss  
+    TryCatch try_catch; 
 
+    // Trigger the callback
     enc_req->callback->Call(Context::GetCurrent()->Global(), 2, argv);
 
-    //if (try_catch.HasCaught())
-    //    FatalException(try_catch);
+    // If the callback failed... then let;s handle that...
+    if (try_catch.HasCaught())
+        FatalException(try_catch);
 
+    // Unferences the event...
     uv_unref((uv_handle_t*) req);
 
+    // Dispose of the callback...
     enc_req->callback.Dispose();
 
+    // Unreference the video encoding request
     enc_req->video_obj->Unref();
+
+    // Free the eocoding request
     free(enc_req);
 
+    // Now finally we free the io event.. 
     delete req;
 }
 
@@ -557,12 +559,6 @@ AsyncStackedVideo::Encode(const Arguments &args)
     enc_req->callback = Persistent<Function>::New(callback);
     enc_req->video_obj = video;
     enc_req->error = NULL;
-
-    //eio_custom(EIO_Encode, EIO_PRI_DEFAULT, EIO_EncodeAfter, enc_req);
-    //ev_ref(EV_DEFAULT_UC);
-
-    fprintf(stderr,"Final event wrapping...\n");
-
 
     uv_work_t *req = new uv_work_t;    
     req->data = enc_req;                                                        
