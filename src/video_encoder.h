@@ -4,6 +4,13 @@
 #include <string>
 #include <theora/theoraenc.h>
 
+#include <node_buffer.h>
+#include <node_version.h>
+
+using namespace v8;
+using namespace node;
+
+
 class VideoEncoder {
     int width, height, quality, frameRate, keyFrameInterval;
     std::string outputFileName;
@@ -15,8 +22,11 @@ class VideoEncoder {
     ogg_packet op;
     ogg_page og;
     ogg_stream_state *ogg_os;
+    Persistent<Function> cb;
 
     unsigned long frameCount;
+
+    void writeData(const unsigned char *data,int length);
 
 public:
     VideoEncoder(int wwidth, int hheight);
@@ -25,6 +35,7 @@ public:
     void newFrame(const unsigned char *data);
     void dupFrame(const unsigned char *data, int time);
     void setOutputFile(const char *fileName);
+    void setCallback(Persistent<Function> callback);
     void setQuality(int qquality);
     void setFrameRate(int fframeRate);
     void setKeyFrameInterval(int kkeyFrameInterval);

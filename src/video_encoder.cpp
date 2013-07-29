@@ -8,6 +8,10 @@
 #include "common.h"
 #include "video_encoder.h"
 
+
+#include <node_buffer.h>
+#include <node_version.h>
+
 using namespace v8;
 using namespace node;
 
@@ -50,6 +54,26 @@ VideoEncoder::VideoEncoder(int wwidth, int hheight) :
 
 VideoEncoder::~VideoEncoder() {
     end();
+}
+
+
+void VideoEncoder::writeData(const unsigned char *data,int length)
+{
+    fprintf(stderr,"writeData %d bytes\n",length);
+
+    fwrite(data,1,length,ogg_fp);
+
+
+  // Create some JavaScript objects, and call the callback
+  Local<Value> argv[1] = { Integer::New(length) };
+
+  TryCatch try_catch;
+
+  cb->Call(Context::GetCurrent()->Global(), 1, argv);
+
+  if(try_catch.HasCaught())
+    FatalException(try_catch);
+
 }
 
 void
@@ -102,6 +126,14 @@ VideoEncoder::setOutputFile(const char *fileName)
     outputFileName = fileName;
 }
 
+
+void
+VideoEncoder::setCallback(Persistent<Function> callback)
+{
+    cb = callback;
+}
+
+
 void
 VideoEncoder::setQuality(int qquality)
 {
@@ -129,6 +161,7 @@ VideoEncoder::end()
     ogg_fp = NULL;
     td = NULL;
     ogg_os = NULL;
+    //cb = NULL;
 }
 
 void
@@ -177,8 +210,11 @@ VideoEncoder::WriteHeaders()
     if (ogg_stream_pageout(ogg_os, &og)!=1)
         throw "ogg_stream_pageout failed in WriteHeaders";
 
-    fwrite(og.header,1,og.header_len,ogg_fp);
-    fwrite(og.body,1,og.body_len,ogg_fp);
+    writeData(og.header,og.header_len);
+    writeData(og.body,og.body_len);
+
+    //fwrite(og.header,1,og.header_len,ogg_fp);
+    //fwrite(og.body,1,og.body_len,ogg_fp);
 
     for (;;) {
         int ret = th_encode_flushheader(td, &tc, &op);
@@ -195,8 +231,12 @@ VideoEncoder::WriteHeaders()
             throw "ogg_stream_flush failed in WriteHeaders";
         else if (ret == 0)
             break;
-        fwrite(og.header, 1, og.header_len, ogg_fp);
-        fwrite(og.body, 1, og.body_len, ogg_fp);
+
+        writeData(og.header,og.header_len);
+    	writeData(og.body,og.body_len);
+
+        //fwrite(og.header, 1, og.header_len, ogg_fp);
+        //fwrite(og.body, 1, og.body_len, ogg_fp);
     }
 }
 
@@ -304,13 +344,19 @@ VideoEncoder::WriteFrame(const unsigned char *rgb, int dupCount)
             throw "th_encode_packetout failed in WriteFrame";
         ogg_stream_packetin(ogg_os, &op);
         while(ogg_stream_pageout(ogg_os, &og)) {
-            fwrite(og.header, og.header_len, 1, ogg_fp);
-            fwrite(og.body, og.body_len, 1, ogg_fp);
+ 		writeData(og.header,og.header_len);
+    		writeData(og.body,og.body_len);
+            //fwrite(og.header, og.header_len, 1, ogg_fp);
+            //fwrite(og.body, og.body_len, 1, ogg_fp);
         }
     }
 
     ogg_stream_flush(ogg_os, &og);
-    fwrite(og.header, og.header_len, 1, ogg_fp);
-    fwrite(og.body, og.body_len, 1, ogg_fp);
+
+    writeData(og.header,og.header_len);
+    writeData(og.body,og.body_len);
+
+    //fwrite(og.header, og.header_len, 1, ogg_fp);
+    //fwrite(og.body, og.body_len, 1, ogg_fp);
 }
 

@@ -12,6 +12,10 @@ var outputFileName = 'full-frames-stream.ogv';
 // First let's make the target stream.
 //
 
+// http://loose-bits.com/2012/08/02/nodejs-read-write-streams-pipes.html
+// https://groups.google.com/forum/#!topic/nodejs/0uUgncIKApc
+
+
 var s = new stream.Duplex();
 
 s.on('error',function(args)
@@ -38,18 +42,17 @@ var f = fs.createWriteStream(outputFileName);
 
 //s.write('hello cruel world');
 
-f.write('hello world');
+//f.write('hello world');
 
 
 //s.flush();
 //f.flush();
 //s.close();
-f.close();
+//f.close();
 
 
 
 
-/*
 var fileRx = new RegExp(/^terminal-(\d+).rgb$/);
 
 var files = fs.readdirSync('.').sort().filter(
@@ -61,7 +64,14 @@ function baseName(fileName) {
 }
 
 var fixedVideo = new VideoLib.FixedVideo(720, 400); // width, height
-fixedVideo.setOutputFile('video-stream.ogv');
+//fixedVideo.setOutputFile('video-stream.ogv');
+
+fixedVideo.setOutputFile(outputFileName);
+
+
+fixedVideo.setCallback(function(data){
+   console.log("callback called");
+});
 
 var buf = new Buffer(1152000);
 files.forEach(function (file) {
@@ -72,4 +82,3 @@ files.forEach(function (file) {
 });
 
 fixedVideo.end();
-*/
