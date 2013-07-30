@@ -69,8 +69,8 @@ var fixedVideo = new VideoLib.FixedVideo(720, 400); // width, height
 fixedVideo.setOutputFile(outputFileName);
 
 
-fixedVideo.setCallback(function(data){
-   console.log("callback called");
+fixedVideo.setCallback(function(data,length){
+   console.log("callback called " + length);
 });
 
 var buf = new Buffer(1152000);
