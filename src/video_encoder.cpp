@@ -63,36 +63,37 @@ void VideoEncoder::writeData(const unsigned char *data,int length)
 
     fwrite(data,1,length,ogg_fp);
 
+    //Handle<Value> bargv[2];
+    // this is safe b/c Undefined and length fits in an SMI, so there's no risk
+    // of GC reclaiming the values prematurely.
+    //bargv[0] = Undefined(node_isolate);
+    //bargv[1] = Uint32::New(length, node_isolate);
+    //Local<Object> obj = NewInstance(p_buffer_fn, ARRAY_SIZE(argv), argv);
 
+    //Buffer *bp = Buffer::New(length); 
+    //memcpy(bp->data(), sbuf.data, nbytes); 
 
-
-  //Handle<Value> bargv[2];
-  // this is safe b/c Undefined and length fits in an SMI, so there's no risk
-  // of GC reclaiming the values prematurely.
-  //bargv[0] = Undefined(node_isolate);
-  //bargv[1] = Uint32::New(length, node_isolate);
-  //Local<Object> obj = NewInstance(p_buffer_fn, ARRAY_SIZE(argv), argv);
-
-  //Buffer *bp = Buffer::New(length); 
-  //memcpy(bp->data(), sbuf.data, nbytes); 
+    // http://luismreis.github.io/node-bindings-guide/docs/returning.html
 
     Buffer *slowBuffer = Buffer::New((const char *)data, (size_t) length);
+    //memcpy(Buffer::Data(slowBuffer), data, length);
+
     Local<Object> global = Context::GetCurrent()->Global();
     Local<Function> bufferConstructor =  Local<Function>::Cast(global->Get(String::New("Buffer")));
     Handle<Value> cArgs[3] = {slowBuffer->handle_, Integer::New(length), Integer::New(0) };
 
+    // Create some JavaScript objects, and call the callback
+    Local<Value> argv[1] = { 
+		bufferConstructor->NewInstance(3,cArgs),
+//		Integer::New(length) 
+	};
 
-  // Create some JavaScript objects, and call the callback
-  Local<Value> argv[2] = { 
-bufferConstructor->NewInstance(3,cArgs)
-, Integer::New(length) };
+    TryCatch try_catch;
 
-  TryCatch try_catch;
+    cb->Call(Context::GetCurrent()->Global(), 1, argv);
 
-  cb->Call(Context::GetCurrent()->Global(), 2, argv);
-
-  if(try_catch.HasCaught())
-    FatalException(try_catch);
+    if(try_catch.HasCaught())
+      FatalException(try_catch);
 
 }
 
