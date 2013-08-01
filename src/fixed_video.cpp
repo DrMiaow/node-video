@@ -17,7 +17,6 @@ FixedVideo::Initialize(Handle<Object> target)
     Local<FunctionTemplate> t = FunctionTemplate::New(New);
     t->InstanceTemplate()->SetInternalFieldCount(1);
     NODE_SET_PROTOTYPE_METHOD(t, "newFrame", NewFrame);
-    NODE_SET_PROTOTYPE_METHOD(t, "setOutputFile", SetOutputFile);
     NODE_SET_PROTOTYPE_METHOD(t, "setCallback", SetCallback);
     NODE_SET_PROTOTYPE_METHOD(t, "setQuality", SetQuality);
     NODE_SET_PROTOTYPE_METHOD(t, "setFrameRate", SetFrameRate);
@@ -32,11 +31,6 @@ FixedVideo::NewFrame(const unsigned char *data)
     videoEncoder.newFrame(data);
 }
 
-void
-FixedVideo::SetOutputFile(const char *fileName)
-{
-    videoEncoder.setOutputFile(fileName);
-}
 
 void
 FixedVideo::SetCallback(Persistent<Function> callback)
@@ -121,24 +115,6 @@ FixedVideo::NewFrame(const Arguments &args)
     return Undefined();
 }
 
-Handle<Value>
-FixedVideo::SetOutputFile(const Arguments &args)
-{
-    HandleScope scope;
-
-    if (args.Length() != 1)
-        return VException("One argument required - output file name.");
-
-    if (!args[0]->IsString())
-        return VException("First argument must be string.");
-
-    String::AsciiValue fileName(args[0]->ToString());
-
-    FixedVideo *fv = ObjectWrap::Unwrap<FixedVideo>(args.This());
-    fv->SetOutputFile(*fileName);
-
-    return Undefined();
-}
 
 
 Handle<Value>

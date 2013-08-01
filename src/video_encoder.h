@@ -13,9 +13,6 @@ using namespace node;
 
 class VideoEncoder {
     int width, height, quality, frameRate, keyFrameInterval;
-    std::string outputFileName;
-
-    FILE *ogg_fp;
     th_info ti;
     th_enc_ctx *td;
     th_comment tc;
@@ -34,7 +31,6 @@ public:
 
     void newFrame(const unsigned char *data);
     void dupFrame(const unsigned char *data, int time);
-    void setOutputFile(const char *fileName);
     void setCallback(Persistent<Function> callback);
     void setQuality(int qquality);
     void setFrameRate(int fframeRate);

@@ -26,7 +26,6 @@ StackedVideo::Initialize(Handle<Object> target)
     NODE_SET_PROTOTYPE_METHOD(t, "newFrame", NewFrame);
     NODE_SET_PROTOTYPE_METHOD(t, "push", Push);
     NODE_SET_PROTOTYPE_METHOD(t, "endPush", EndPush);
-    NODE_SET_PROTOTYPE_METHOD(t, "setOutputFile", SetOutputFile);
     NODE_SET_PROTOTYPE_METHOD(t, "setQuality", SetQuality);
     NODE_SET_PROTOTYPE_METHOD(t, "setFrameRate", SetFrameRate);
     NODE_SET_PROTOTYPE_METHOD(t, "setKeyFrameInterval", SetKeyFrameInterval);
@@ -112,12 +111,6 @@ StackedVideo::EndPush(unsigned long timeStamp)
     lastTimeStamp = timeStamp;
 
     return Undefined();
-}
-
-void
-StackedVideo::SetOutputFile(const char *fileName)
-{
-    videoEncoder.setOutputFile(fileName);
 }
 
 void
@@ -283,22 +276,6 @@ StackedVideo::EndPush(const Arguments &args)
 
     StackedVideo *sv = ObjectWrap::Unwrap<StackedVideo>(args.This());
     sv->EndPush(timeStamp);
-
-    return Undefined();
-}
-
-Handle<Value>
-StackedVideo::SetOutputFile(const Arguments &args)
-{
-    HandleScope scope;
-
-    if (args.Length() != 1)
-        return VException("One argument required - output file name.");
-
-    String::AsciiValue fileName(args[0]->ToString());
-
-    StackedVideo *sv = ObjectWrap::Unwrap<StackedVideo>(args.This());
-    sv->SetOutputFile(*fileName);
 
     return Undefined();
 }

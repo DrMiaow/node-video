@@ -54,7 +54,6 @@ public:
     static void Initialize(v8::Handle<v8::Object> target);
     v8::Handle<v8::Value> Push(unsigned char *rect, int x, int y, int w, int h);
     void EndPush(unsigned long timeStamp=0);
-    void SetOutputFile(const char *fileName);
     void SetQuality(int quality);
     void SetFrameRate(int frameRate);
     void SetKeyFrameInterval(int keyFrameInterval);
@@ -63,7 +62,6 @@ protected:
     static v8::Handle<v8::Value> New(const v8::Arguments &args);
     static v8::Handle<v8::Value> Push(const v8::Arguments &args);
     static v8::Handle<v8::Value> EndPush(const v8::Arguments &args);
-    static v8::Handle<v8::Value> SetOutputFile(const v8::Arguments &args);
     static v8::Handle<v8::Value> SetQuality(const v8::Arguments &args);
     static v8::Handle<v8::Value> SetFrameRate(const v8::Arguments &args);
     static v8::Handle<v8::Value> SetKeyFrameInterval(const v8::Arguments &args);

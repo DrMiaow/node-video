@@ -25,7 +25,6 @@ AsyncStackedVideo::Initialize(Handle<Object> target)
     t->InstanceTemplate()->SetInternalFieldCount(1);
     NODE_SET_PROTOTYPE_METHOD(t, "push", Push);
     NODE_SET_PROTOTYPE_METHOD(t, "endPush", EndPush);
-    NODE_SET_PROTOTYPE_METHOD(t, "setOutputFile", SetOutputFile);
     NODE_SET_PROTOTYPE_METHOD(t, "setQuality", SetQuality);
     NODE_SET_PROTOTYPE_METHOD(t, "setFrameRate", SetFrameRate);
     NODE_SET_PROTOTYPE_METHOD(t, "setKeyFrameInterval", SetKeyFrameInterval);
@@ -146,12 +145,6 @@ AsyncStackedVideo::EndPush(unsigned long timeStamp)
 }
 
 void
-AsyncStackedVideo::SetOutputFile(const char *fileName)
-{
-    videoEncoder.setOutputFile(fileName);
-}
-
-void
 AsyncStackedVideo::SetQuality(int quality)
 {
     videoEncoder.setQuality(quality);
@@ -254,22 +247,6 @@ AsyncStackedVideo::EndPush(const Arguments &args)
 
     AsyncStackedVideo *video = ObjectWrap::Unwrap<AsyncStackedVideo>(args.This());
     video->EndPush();
-
-    return Undefined();
-}
-
-Handle<Value>
-AsyncStackedVideo::SetOutputFile(const Arguments &args)
-{
-    HandleScope scope;
-
-    if (args.Length() != 1)
-        return VException("One argument required - output file name.");
-
-    String::AsciiValue fileName(args[0]->ToString());
-
-    AsyncStackedVideo *video = ObjectWrap::Unwrap<AsyncStackedVideo>(args.This());
-    video->SetOutputFile(*fileName);
 
     return Undefined();
 }

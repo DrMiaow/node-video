@@ -47,9 +47,13 @@ rgb_to_yuv(const unsigned char *rgb, size_t size)
 }
 
 VideoEncoder::VideoEncoder(int wwidth, int hheight) :
-    width(wwidth), height(hheight), quality(31), frameRate(25),
+    width(wwidth), 
+    height(hheight), 
+    quality(31), 
+    frameRate(25),
     keyFrameInterval(64),
-    ogg_fp(NULL), td(NULL), ogg_os(NULL),
+    td(NULL), 
+    ogg_os(NULL),
     frameCount(0) {}
 
 VideoEncoder::~VideoEncoder() {
@@ -59,42 +63,18 @@ VideoEncoder::~VideoEncoder() {
 
 void VideoEncoder::writeData(const unsigned char *data,int length)
 {
-    fprintf(stderr,"writeData %d bytes\n",length);
-
-    fwrite(data,1,length,ogg_fp);
-
-    //Handle<Value> bargv[2];
-    // this is safe b/c Undefined and length fits in an SMI, so there's no risk
-    // of GC reclaiming the values prematurely.
-    //bargv[0] = Undefined(node_isolate);
-    //bargv[1] = Uint32::New(length, node_isolate);
-    //Local<Object> obj = NewInstance(p_buffer_fn, ARRAY_SIZE(argv), argv);
-
-    //Buffer *bp = Buffer::New(length); 
-    //memcpy(bp->data(), sbuf.data, nbytes); 
-
-    // http://luismreis.github.io/node-bindings-guide/docs/returning.html
-
     Buffer *slowBuffer = Buffer::New((const char *)data, (size_t) length);
     //memcpy(Buffer::Data(slowBuffer), data, length);
-
     Local<Object> global = Context::GetCurrent()->Global();
     Local<Function> bufferConstructor =  Local<Function>::Cast(global->Get(String::New("Buffer")));
     Handle<Value> cArgs[3] = {slowBuffer->handle_, Integer::New(length), Integer::New(0) };
-
-    // Create some JavaScript objects, and call the callback
     Local<Value> argv[1] = { 
 		bufferConstructor->NewInstance(3,cArgs),
-//		Integer::New(length) 
 	};
-
     TryCatch try_catch;
-
     cb->Call(Context::GetCurrent()->Global(), 1, argv);
-
     if(try_catch.HasCaught())
       FatalException(try_catch);
-
 }
 
 void
@@ -102,20 +82,6 @@ VideoEncoder::newFrame(const unsigned char *data)
 {
     if (!frameCount) 
     {
-        if (outputFileName.empty())
-	{
-	    fprintf(stderr,"newFrame error nofilename\n");
-            throw "No output means was set. Use setOutputFile to set it."; 
-	    return;
-	}
-        ogg_fp = fopen(outputFileName.c_str(), "w+");
-        if (!ogg_fp) 
-	{
-            char error_msg[256];
-            snprintf(error_msg, 256, "Could not open %s. Error: %s.",outputFileName.c_str(), strerror(errno));
-	    throw strdup(error_msg);
-        }
-
         InitTheora();
         WriteHeaders();
     }
@@ -140,13 +106,6 @@ VideoEncoder::dupFrame(const unsigned char *data, int time)
     int mod = frames%(keyFrameInterval-1);
     if (mod) WriteFrame(data, mod);
 }
-
-void
-VideoEncoder::setOutputFile(const char *fileName)
-{
-    outputFileName = fileName;
-}
-
 
 void
 VideoEncoder::setCallback(Persistent<Function> callback)
@@ -176,13 +135,10 @@ VideoEncoder::setKeyFrameInterval(int kkeyFrameInterval)
 void
 VideoEncoder::end()
 {
-    if (ogg_fp) fclose(ogg_fp);
     if (td) th_encode_free(td);
     if (ogg_os) ogg_stream_clear(ogg_os);
-    ogg_fp = NULL;
     td = NULL;
     ogg_os = NULL;
-    //cb = NULL;
 }
 
 void
@@ -234,9 +190,6 @@ VideoEncoder::WriteHeaders()
     writeData(og.header,og.header_len);
     writeData(og.body,og.body_len);
 
-    //fwrite(og.header,1,og.header_len,ogg_fp);
-    //fwrite(og.body,1,og.body_len,ogg_fp);
-
     for (;;) {
         int ret = th_encode_flushheader(td, &tc, &op);
         if (ret<0)
@@ -256,8 +209,6 @@ VideoEncoder::WriteHeaders()
         writeData(og.header,og.header_len);
     	writeData(og.body,og.body_len);
 
-        //fwrite(og.header, 1, og.header_len, ogg_fp);
-        //fwrite(og.body, 1, og.body_len, ogg_fp);
     }
 }
 
@@ -367,8 +318,6 @@ VideoEncoder::WriteFrame(const unsigned char *rgb, int dupCount)
         while(ogg_stream_pageout(ogg_os, &og)) {
  		writeData(og.header,og.header_len);
     		writeData(og.body,og.body_len);
-            //fwrite(og.header, og.header_len, 1, ogg_fp);
-            //fwrite(og.body, og.body_len, 1, ogg_fp);
         }
     }
 
@@ -376,8 +325,5 @@ VideoEncoder::WriteFrame(const unsigned char *rgb, int dupCount)
 
     writeData(og.header,og.header_len);
     writeData(og.body,og.body_len);
-
-    //fwrite(og.header, og.header_len, 1, ogg_fp);
-    //fwrite(og.body, og.body_len, 1, ogg_fp);
 }
 
