@@ -17,6 +17,9 @@ FixedVideo::Initialize(Handle<Object> target)
     Local<FunctionTemplate> t = FunctionTemplate::New(New);
     t->InstanceTemplate()->SetInternalFieldCount(1);
     NODE_SET_PROTOTYPE_METHOD(t, "newFrame", NewFrame);
+    NODE_SET_PROTOTYPE_METHOD(t, "noiseFrame", NoiseFrame);
+    NODE_SET_PROTOTYPE_METHOD(t, "rgbFrame", RGBFrame);
+    NODE_SET_PROTOTYPE_METHOD(t, "flush", Flush);
     NODE_SET_PROTOTYPE_METHOD(t, "setCallback", SetCallback);
     NODE_SET_PROTOTYPE_METHOD(t, "setQuality", SetQuality);
     NODE_SET_PROTOTYPE_METHOD(t, "setFrameRate", SetFrameRate);
@@ -31,13 +34,30 @@ FixedVideo::NewFrame(const unsigned char *data)
     videoEncoder.newFrame(data);
 }
 
+void
+FixedVideo::NoiseFrame()
+{
+    videoEncoder.noiseFrame();
+}
+
+void
+FixedVideo::RGBFrame(const unsigned char red,const unsigned char green,const unsigned char blue)
+{
+    videoEncoder.rgbFrame(red,green,blue);
+}
+
+void
+FixedVideo::Flush()
+{
+    videoEncoder.flush();
+}
+
 
 void
 FixedVideo::SetCallback(Persistent<Function> callback)
 {
     videoEncoder.setCallback(callback);
 }
-
 
 void
 FixedVideo::SetQuality(int quality)
@@ -115,6 +135,61 @@ FixedVideo::NewFrame(const Arguments &args)
     return Undefined();
 }
 
+
+Handle<Value>
+FixedVideo::NoiseFrame(const Arguments &args)
+{
+    HandleScope scope;
+
+    FixedVideo *fv = ObjectWrap::Unwrap<FixedVideo>(args.This());
+
+    fv->NoiseFrame();
+
+    return Undefined();
+}
+
+
+
+Handle<Value>
+FixedVideo::RGBFrame(const Arguments &args)
+{
+    HandleScope scope;
+
+    if (args.Length() != 3)
+        return VException("Three argument required - Red Green and Blue numbers with values 0-255.");
+
+     if (!args[0]->IsInt32())
+        return VException("First argument must be a number.");
+
+     if (!args[1]->IsInt32())
+        return VException("Second argument must be a number.");
+
+     if (!args[2]->IsInt32())
+        return VException("Third argument must be a number.");
+
+    unsigned char red = (unsigned char) args[0]->Uint32Value();
+    unsigned char green = (unsigned char) args[1]->Uint32Value();
+    unsigned char blue = (unsigned char) args[2]->Uint32Value();
+
+    FixedVideo *fv = ObjectWrap::Unwrap<FixedVideo>(args.This());
+
+    fv->RGBFrame(red,green,blue);
+
+    return Undefined();
+}
+
+
+Handle<Value>
+FixedVideo::Flush(const Arguments &args)
+{
+    HandleScope scope;
+
+    FixedVideo *fv = ObjectWrap::Unwrap<FixedVideo>(args.This());
+
+    fv->Flush();
+
+    return Undefined();
+}
 
 
 Handle<Value>

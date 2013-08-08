@@ -46,6 +46,40 @@ rgb_to_yuv(const unsigned char *rgb, size_t size)
     return yuv;
 }
 
+
+static unsigned char *
+random_rgb(size_t size)
+{
+    unsigned char *yuv = (unsigned char *)malloc(size);
+    if (!yuv) return NULL;
+
+    for (size_t i=0; i<size; i+=3) {
+
+        yuv[i]   = rand() % 256;
+        yuv[i+1] = rand() % 256;
+        yuv[i+2] = rand() % 256;
+    }
+
+    return yuv;
+}
+
+static unsigned char *
+rgb_frame(unsigned char red,unsigned char green,unsigned char blue,size_t size)
+{
+    unsigned char *rgb = (unsigned char *)malloc(size);
+    if (!rgb) return NULL;
+
+    for (size_t i=0; i<size; i+=3) {
+
+        rgb[i]   = red;
+        rgb[i+1] = green;
+        rgb[i+2] = blue;
+    }
+
+    return rgb;
+}
+
+
 VideoEncoder::VideoEncoder(int wwidth, int hheight) :
     width(wwidth), 
     height(hheight), 
@@ -88,6 +122,62 @@ VideoEncoder::newFrame(const unsigned char *data)
     WriteFrame(data);
     frameCount++;
 }
+
+void
+VideoEncoder::noiseFrame()
+{
+    if (!frameCount)
+    {
+        InitTheora();
+        WriteHeaders();
+    }
+
+    unsigned char *rgb;
+
+    rgb = random_rgb(width*height*3);
+    LOKI_ON_BLOCK_EXIT(free, rgb);
+    if (!rgb)
+        throw "malloc failed in random_rgb";
+
+    WriteFrame(rgb);
+
+    frameCount++;
+}
+
+void VideoEncoder::rgbFrame(unsigned char red,unsigned char green,unsigned char blue)
+{
+    if (!frameCount)
+    {
+        InitTheora();
+        WriteHeaders();
+    }
+
+    unsigned char *rgb;
+
+    rgb = rgb_frame(red,green,blue,width*height*3);
+    LOKI_ON_BLOCK_EXIT(free, rgb);
+    if (!rgb)
+        throw "malloc failed in rgb_frame";
+
+    WriteFrame(rgb);
+
+    frameCount++;
+}
+
+void VideoEncoder::flush()
+{
+
+    if (!frameCount)
+    {
+        InitTheora();
+        WriteHeaders();
+    }
+    else
+    {
+      Flush();
+    }
+}
+
 
 void
 VideoEncoder::dupFrame(const unsigned char *data, int time)
@@ -212,6 +302,17 @@ VideoEncoder::WriteHeaders()
     }
 }
 
+
+void
+VideoEncoder::Flush()
+{
+    ogg_page og;
+
+    ogg_stream_flush(ogg_os, &og);
+    writeData(og.header,og.header_len);
+    writeData(og.body,og.body_len);
+}
+
 void
 VideoEncoder::WriteFrame(const unsigned char *rgb, int dupCount)
 {
@@ -321,9 +422,11 @@ VideoEncoder::WriteFrame(const unsigned char *rgb, int dupCount)
         }
     }
 
-    ogg_stream_flush(ogg_os, &og);
 
+    /*
+    ogg_stream_flush(ogg_os, &og);
     writeData(og.header,og.header_len);
     writeData(og.body,og.body_len);
+    */
 }
 

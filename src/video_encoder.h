@@ -30,7 +30,10 @@ public:
     ~VideoEncoder();
 
     void newFrame(const unsigned char *data);
+    void noiseFrame();
+    void rgbFrame(unsigned char red,unsigned char green,unsigned char blue);
     void dupFrame(const unsigned char *data, int time);
+    void flush();
     void setCallback(Persistent<Function> callback);
     void setQuality(int qquality);
     void setFrameRate(int fframeRate);
@@ -41,6 +44,7 @@ private:
     void InitTheora();
     void WriteHeaders();
     void WriteFrame(const unsigned char *rgb, int dupCount=0);
+    void Flush();
 };
 
 #endif

@@ -17,6 +17,10 @@
     tag.addEventListener('waiting',eventWaiting);
     tag.addEventListener('stalled',eventStalled);
     tag.addEventListener('suspend',eventSuspend);
+    tag.addEventListener('ended',eventEnded);
+    tag.addEventListener('click',eventClick);
+    tag.addEventListener('mousemove',eventMouseMove);
+
     function appendLog(text) {
       console.log(text);
     };
@@ -50,6 +54,15 @@
     };
     function eventSuspend() {
         appendLog("Suspend event fired (buffered="+getBufferedRange()+")");
+    };
+    function eventEnded() {
+        appendLog("End event fired");
+    };
+    function eventClick(e) {
+        appendLog("Click event fired.");
+    };
+    function eventMouseMove(e) {
+        appendLog("MouseMove event fired.");
     };
     function progressUpdate(state) {
         update = state;

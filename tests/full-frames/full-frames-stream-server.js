@@ -7,6 +7,7 @@ var http = require('http');
 var url = require("url");
 var path = require("path");
 var port = 3000;
+var frameRate = 5;
 
 http.createServer(function(request, response) {
 
@@ -39,6 +40,8 @@ http.createServer(function(request, response) {
 
   var fixedVideo = new video.FixedVideo(720, 400); 
 
+  fixedVideo.setFrameRate(frameRate);
+
   fixedVideo.setCallback(function(buffer){
     console.log("callback called with buffer.length = " + buffer.length);
     if (!response.write(buffer))
@@ -52,7 +55,7 @@ http.createServer(function(request, response) {
   //var buf = new Buffer();
 
   //for(var x = 0;x<10;x++)
-  while(true)
+  /*while(true)
   {
     files.forEach(function (file) {
       sys.log(file);
@@ -63,10 +66,28 @@ http.createServer(function(request, response) {
       }
       fixedVideo.newFrame(buf);
     });
+  }*/
+
+  var fileNumber = 0;
+
+  function render()
+  {
+      if (fileNumber >= files.length) fileNumber = 0;
+      var file = files[fileNumber];
+      sys.log(file);
+      var terminal = fs.readFileSync(file, 'binary');
+      if (!buf.write(terminal, 'binary'))
+      {
+       console.log("WRITE TO FILE BUFFERED");
+      }
+      fixedVideo.newFrame(buf);
+      fileNumber++;
   }
 
-  fixedVideo.end();
-  response.end();
+  interval = setInterval(render, 1000/5);
+
+  //fixedVideo.end();
+  //response.end();
 
 
   /*
