@@ -7,19 +7,38 @@ var http = require('http');
 var url = require("url");
 var path = require("path");
 var port = 3000;
-var frameRate = 5;
+var frameRate = 25;
 
-http.createServer(function(request, response) {
 
-  var uri = url.parse(request.url).pathname;
-  var filename = path.join(process.cwd(), uri);
-/*
-  var contentTypesByExtension = {
+// Static Files
+var index = fs.readFileSync(__dirname + '/client.html');
+
+ var contentTypesByExtension = {
     '.html': "text/html",
     '.css':  "text/css",
     '.js':   "text/javascript"
   };
-*/
+
+
+http.createServer(function(request, response) {
+
+  var uriFilename = url.parse(request.url).pathname;
+  var filename = path.join(process.cwd(), uriFilename);
+  var contentType = contentTypesByExtension[path.extname(filename)];
+
+  console.log(uriFilename);
+
+  if (uriFilename == "/full-frames-stream-server.html")
+  {
+    response.writeHead(200, {"Content-type" : contentType});
+    response.end(index);
+    return;
+  }
+  else
+  if  (uriFilename == "/video.ogv")
+  { 
+
+
 
    response.writeHead(200, {"Content-Type": "video/ogg"});
 
@@ -84,11 +103,20 @@ http.createServer(function(request, response) {
       fileNumber++;
   }
 
-  interval = setInterval(render, 1000/5);
+    interval = setInterval(render, 1000/frameRate);
 
-  //fixedVideo.end();
-  //response.end();
+    //fixedVideo.end();
+    //response.end();
+  }
+  else
+  {
 
+      response.writeHead(404, {"Content-Type": "text/plain"});
+      response.write("404 Not Found\n");
+      response.end();
+      return;
+
+  }
 
   /*
   fs.exists(filename, function(exists) {

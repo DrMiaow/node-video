@@ -97,6 +97,8 @@ VideoEncoder::~VideoEncoder() {
 
 void VideoEncoder::writeData(const unsigned char *data,int length)
 {
+   if (length == 0) return;
+
     Buffer *slowBuffer = Buffer::New((const char *)data, (size_t) length);
     //memcpy(Buffer::Data(slowBuffer), data, length);
     Local<Object> global = Context::GetCurrent()->Global();
